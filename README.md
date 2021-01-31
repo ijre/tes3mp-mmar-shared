@@ -1,65 +1,13 @@
-# Multiple Mark And Recall for TES3MP
+# Shared Multiple Mark And Recall for TES3MP
 
-Inspired by [Multiple Teleport Marking (OpenMW and Tamriel Rebuilt)](https://www.nexusmods.com/morrowind/mods/44825) by Marcel Hesselbarth and rot.
+This is a simple fork of the original repo, thus installation is the same. The important changes are as follows:
 
-**Requires [DataManager](https://github.com/tes3mp-scripts/DataManager)!**
+- Marks are now shared between all players.
 
-Also known as MMAR.  Moves mark and recall spell functionality to chat commands, and allows for more than one mark up to a configurable max.
+- The config options and related code/checks for `maxMarks` and `teleportForbidden` plus its related entry, `msgNotAllowed` have been removed; the 1st now being irrelevant, and the latter two simply being personal choice.
 
-The spells are required, a configurable amount of magicka is used, the proper spell chance is calculated, and a configurable amount of progress is given to Mysticism on a successful "cast".
+- Creating or deleting a mark will now tell everyone on the server who performed the action, alongside the name of the mark.
 
-The default mark and recall spells still work normally.
 
-## Installation
-
-1. Place this repo into your `CoreScripts/scripts/custom/` directory.
-
-1. Add the following to `CoreScripts/scripts/customScripts.lua`:
-
-        ...
-        -- DataManager needs to before MMAR, like this
-        DataManager = require("custom/DataManager/main")
-
-        require("custom/tes3mp-mmar/main")
-
-1. Ensure that `DataManager` loads before this mod as seen above.
-
-1. Optionally configure MMAR by editing the `CoreScripts/data/custom/__config_MultipleMarkAndRecall.json` file (see below).
-
-## Configuration
-
-* `maxMarks`
-
-Integer.  The maximum allowed number of mark points.  Default: `18`
-
-* `msgMark`
-
-String.  The chat message shown on a successful mark.  Any occurance of `%s` will be replaced with the given mark name.  Default: `#008000The mark \"%s\" has been set!#FFFFFF`
-
-* `msgMarkRm`
-
-String.  The chat message shown on a successful mark deletion.  Any occurance of `%s` will be replaced with the given mark name.  Default: `#008000The mark \"%s\" has been deleted!#FFFFFF`
-
-* `msgNotAllowed`
-
-String.  The chat message shown when teleportation from the current cell is not allowed.  Default: `#FF0000Teleportation is not allowed here!#FFFFFF`
-
-* `msgRecall`
-
-String.  The chat message shown on a successful recall.  Any occurance of `%s` will be replaced with the given mark name.  Default: `#008000Recalled to: \"%s\"!#FFFFFF`
-
-* `msgRecallFailed`
-
-String.  The chat message shown when a nonexistent recall name is given.  Default: `#FF0000Recall failed; that mark doesn't exist!#FFFFFF`
-
-* `skillProgressPoints`
-
-Integer.  The number of progress points given to Mysticism on a successful spell cast; defaults to the value given by [MBSP](https://github.com/IllyaMoskvin/tes3mp-mbsp), for the vanilla value set this to `1`.  Default: `2`
-
-* `spellCost`
-
-Integer.  How much magicka should mark and recall spells cost?  Default: `18`
-
-* `teleportForbidden`
-
-Array of strings.  A list of cell names from which teleportation is forbidden.  The default value is taken from   Default: `18`
+## **Important note:**
+### **The server (currently) does NOT check for admin or mod rights for any actions, only use this mod if you trust the players who will be using it.**
