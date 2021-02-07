@@ -6,7 +6,7 @@ local MultipleMarkAndRecall = {}
 MultipleMarkAndRecall.defaultConfig =
 {
     msgMark = color.Green .. "The mark \"%s\" has been set by %s!" .. color.Default,
-    msgMarkRm = color.Green .. "The mark \"%s\" has been deleted by %s!" .. color.Default,
+    msgMarkRm = color.Red .. "The mark \"%s\" has been deleted by %s!" .. color.Default,
     msgRecall = color.Green .. "Recalled to: \"%s\"!" .. color.Default,
     msgFailed = color.Red .. "%s failed; mark \"%s\" doesn't exist!" .. color.Default,
     skillProgressPoints = 2,
@@ -66,10 +66,7 @@ local function spellSuccess(pid)
     local mysticism = player.data.skills["Mysticism"].base
     local willpower = player.data.attributes["Willpower"].base
 
-    -- The OpenMW wiki and UESP seem to disagree on this formula; I'm going with the OpenMW wiki.
-    --
-    -- castChance = (lowestSkill - spellCost + actor.castBonus + 0.2 * actorWillpower + 0.1 * actorLuck) * fatigueTerm
-    -- Source: https://wiki.openmw.org/index.php?title=Research:Magic#Spell_Casting
+    -- OpenMW spell chance formula, source: https://wiki.openmw.org/index.php?title=Research:Magic#Spell_Casting
 
     local chance = (mysticism - MultipleMarkAndRecall.config.spellCost + 0.2 * willpower + 0.1 * luck) * (currentFatigue / maximumFatigue)
 
