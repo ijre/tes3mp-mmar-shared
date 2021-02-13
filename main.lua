@@ -126,7 +126,7 @@ MultipleMarkAndRecall.Cmd = function(pid, cmd)
     if not hasSpell(pid, spell) and not (spellHack and hasSpell(pid, "mark")) then
         chatMsg(pid, color.Red .. "You do not have the " .. spellUpper .. " spell!" .. color.Default)
     elseif markName == "" then
-        chatMsg(pid, color.Red .. "Please supply a mark name!\nIf you do not know any marks, do \"/list\" or \"/ls\"" .. color.Default)
+        chatMsg(pid, color.Red .. "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"" .. color.Default)
     elseif (spell == "recall" or spell == "markrm") and mark == nil then
         chatMsg(pid, string.format(MultipleMarkAndRecall.config.msgFailed, spellUpper, markName))
     elseif spell == "markrm" then
@@ -152,5 +152,4 @@ end
 customCommandHooks.registerCommand("mark", MultipleMarkAndRecall.Cmd)
 customCommandHooks.registerCommand("markrm", MultipleMarkAndRecall.Cmd)
 customCommandHooks.registerCommand("recall", MultipleMarkAndRecall.Cmd)
-customCommandHooks.registerCommand("list", lsMarks)
 customCommandHooks.registerCommand("ls", lsMarks)
