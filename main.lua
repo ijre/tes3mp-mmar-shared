@@ -58,6 +58,8 @@ local function ListMarks(pid)
 end
 
 local function GetFatigueTerm(pid)
+    -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/creaturestats.cpp#L94
+
     local maximumFatigue = tes3mp.GetFatigueBase(pid)
     local normalized = math.floor(maximumFatigue)
     if maximumFatigue == 0 then normalized = 1 else normalized = math.max(0.0, tes3mp.GetFatigueCurrent(pid) / maximumFatigue) end
@@ -66,13 +68,15 @@ local function GetFatigueTerm(pid)
 end
 
 local function SpellSuccess(pid)
+    -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L59
+    -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L126
+
     local mysticism = (tes3mp.GetSkillBase(pid, 14) + tes3mp.GetSkillModifier(pid, 14)) * 2
     local willpower = tes3mp.GetAttributeBase(pid, 2) + tes3mp.GetAttributeModifier(pid, 2)
     local luck = tes3mp.GetAttributeBase(pid, 7) + tes3mp.GetAttributeModifier(pid, 7)
 
-    -- OpenMW spell chance formula, source: https://wiki.openmw.org/index.php?title=Research:Magic#Spell_Casting
-
     local chance = (mysticism - MultipleMarkAndRecall.config.spellCost + 0.2 * willpower + 0.1 * luck) * GetFatigueTerm(pid)
+    -- Sadly unable to implement the Sound debuff for now, tes3mp doesn't seem to have any way of letting us see applied effects
 
     local succeed = math.random(0, 99) < chance
 
@@ -137,6 +141,7 @@ MultipleMarkAndRecall.Cmd = function(pid, cmd)
         RmMark(pid, markName)
     else
         player:SaveStatsDynamic()
+
         if player.data.stats.magickaCurrent < MultipleMarkAndRecall.config.spellCost then
             ChatMsg(pid, color.Red .. "You do not have enough magicka to cast " .. spellUpper .. "!" .. color.Default)
         elseif not SpellSuccess(pid) then
