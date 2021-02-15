@@ -62,7 +62,7 @@ local function GetFatigueTerm(pid)
 
     local maximumFatigue = tes3mp.GetFatigueBase(pid)
     local normalized = math.floor(maximumFatigue)
-    if maximumFatigue == 0 then normalized = 1 else normalized = math.max(0.0, tes3mp.GetFatigueCurrent(pid) / maximumFatigue) end
+    if normalized == 0 then normalized = 1 else normalized = math.max(0.0, tes3mp.GetFatigueCurrent(pid) / maximumFatigue) end
 
     return 1.25 - 0.5 * (1 - normalized)
 end
