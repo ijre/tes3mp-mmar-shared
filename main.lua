@@ -21,15 +21,15 @@ MultipleMarkAndRecall.marks = DataManager.loadConfiguration(marksConfig, {})
 math.randomseed(os.time())
 
 -- region Helpers
-local function chatMsg(pid, msg, all)
+local function ChatMsg(pid, msg, all)
     tes3mp.SendMessage(pid, "[MMAR]: " .. msg .. "\n", all)
 end
 
-local function hasSpell(pid, spell)
+local function HasSpell(pid, spell)
     return tableHelper.containsValue(Players[pid].data.spellbook, spell)
 end
 
-local function doProgressAndStats(pid, progress)
+local function DoProgressAndStats(pid, progress)
     local player = Players[pid]
 
     if progress then
@@ -41,23 +41,23 @@ local function doProgressAndStats(pid, progress)
     player:LoadStatsDynamic()
 end
 
-local function lsMarks(pid)
+local function ListMarks(pid)
     local marks = MultipleMarkAndRecall.marks
 
     if tableHelper.isEmpty(marks) then
-        chatMsg(pid, "There are no marks set.")
+        ChatMsg(pid, "There are no marks set.")
     else
-        chatMsg(pid, "Marks:")
+        ChatMsg(pid, "Marks:")
 
         for name, pos in pairs(marks) do
-            chatMsg(pid, name .. " (" .. pos.cell .. ")")
+            ChatMsg(pid, name .. " (" .. pos.cell .. ")")
         end
     end
 
-    chatMsg(pid, "There are currently " .. tostring(tableHelper.getCount(MultipleMarkAndRecall.marks)) .. " marks.")
+    ChatMsg(pid, "There are currently " .. tostring(tableHelper.getCount(MultipleMarkAndRecall.marks)) .. " marks.")
 end
 
-local function spellSuccess(pid)
+local function SpellSuccess(pid)
     local player = Players[pid]
 
     local currentFatigue = player.data.stats.fatigueCurrent
@@ -72,13 +72,13 @@ local function spellSuccess(pid)
 
     local succeed = math.random(1, 100) < chance
 
-    doProgressAndStats(pid, succeed)
+    DoProgressAndStats(pid, succeed)
 
     return succeed
 end
 -- endregion
 
-local function doRecall(pid, markName)
+local function DoRecall(pid, markName)
     local player = Players[pid]
 
     local mark = MultipleMarkAndRecall.marks[markName]
@@ -90,10 +90,10 @@ local function doRecall(pid, markName)
     player.data.location.rotZ = mark.rot
 
     player:LoadCell()
-    chatMsg(pid, string.format(MultipleMarkAndRecall.config.msgRecall, markName))
+    ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgRecall, markName))
 end
 
-local function setMark(pid, markName)
+local function SetMark(pid, markName)
     MultipleMarkAndRecall.marks[markName] =
     {
         cell = tes3mp.GetCell(pid),
@@ -103,14 +103,14 @@ local function setMark(pid, markName)
         rot = tes3mp.GetRotZ(pid)
     }
 
-    chatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMark, markName, tes3mp.GetName(pid)), true)
+    ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMark, markName, tes3mp.GetName(pid)), true)
 end
 
-local function rmMark(pid, markName)
+local function RmMark(pid, markName)
     MultipleMarkAndRecall.marks[markName] = nil
     tableHelper.cleanNils(MultipleMarkAndRecall.marks)
 
-    chatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMarkRm, markName, tes3mp.GetName(pid)), true)
+    ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMarkRm, markName, tes3mp.GetName(pid)), true)
 end
 
 MultipleMarkAndRecall.Cmd = function(pid, cmd)
@@ -123,25 +123,25 @@ MultipleMarkAndRecall.Cmd = function(pid, cmd)
     local player = Players[pid]
     local mark = MultipleMarkAndRecall.marks[markName]
 
-    if not hasSpell(pid, spell) and not (spellHack and hasSpell(pid, "mark")) then
-        chatMsg(pid, color.Red .. "You do not have the " .. spellUpper .. " spell!" .. color.Default)
+    if not HasSpell(pid, spell) and not (spellHack and HasSpell(pid, "mark")) then
+        ChatMsg(pid, color.Red .. "You do not have the " .. spellUpper .. " spell!" .. color.Default)
     elseif markName == "" then
-        chatMsg(pid, color.Red .. "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"" .. color.Default)
+        ChatMsg(pid, color.Red .. "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"" .. color.Default)
     elseif (spell == "recall" or spell == "markrm") and mark == nil then
-        chatMsg(pid, string.format(MultipleMarkAndRecall.config.msgFailed, spellUpper, markName))
+        ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgFailed, spellUpper, markName))
     elseif spell == "markrm" then
-        rmMark(pid, markName)
+        RmMark(pid, markName)
     else
         player:SaveStatsDynamic()
         if player.data.stats.magickaCurrent < MultipleMarkAndRecall.config.spellCost then
-            chatMsg(pid, color.Red .. "You do not have enough magicka to cast " .. spellUpper .. "!" .. color.Default)
-        elseif not spellSuccess(pid) then
-            chatMsg(pid, color.Red .. "Casting " .. spellUpper .. " has failed!" .. color.Default)
+            ChatMsg(pid, color.Red .. "You do not have enough magicka to cast " .. spellUpper .. "!" .. color.Default)
+        elseif not SpellSuccess(pid) then
+            ChatMsg(pid, color.Red .. "Casting " .. spellUpper .. " has failed!" .. color.Default)
         else
             if spell == "mark" then
-                setMark(pid, markName)
+                SetMark(pid, markName)
             elseif spell == "recall" then
-                doRecall(pid, markName)
+                DoRecall(pid, markName)
             end
         end
     end
@@ -152,4 +152,4 @@ end
 customCommandHooks.registerCommand("mark", MultipleMarkAndRecall.Cmd)
 customCommandHooks.registerCommand("markrm", MultipleMarkAndRecall.Cmd)
 customCommandHooks.registerCommand("recall", MultipleMarkAndRecall.Cmd)
-customCommandHooks.registerCommand("ls", lsMarks)
+customCommandHooks.registerCommand("ls", ListMarks)
