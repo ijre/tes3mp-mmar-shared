@@ -57,20 +57,24 @@ local function ListMarks(pid)
     ChatMsg(pid, "There are currently " .. tostring(tableHelper.getCount(MultipleMarkAndRecall.marks)) .. " marks.")
 end
 
-local function SpellSuccess(pid)
-    local player = Players[pid]
+local function GetFatigueTerm(pid)
+    local maximumFatigue = tes3mp.GetFatigueBase(pid)
+    local normalized = math.floor(maximumFatigue)
+    if maximumFatigue == 0 then normalized = 1 else normalized = math.max(0.0, tes3mp.GetFatigueCurrent(pid) / maximumFatigue) end
 
-    local currentFatigue = player.data.stats.fatigueCurrent
-    local maximumFatigue = player.data.stats.fatigueBase
-    local luck = player.data.attributes["Luck"].base
-    local mysticism = player.data.skills["Mysticism"].base
-    local willpower = player.data.attributes["Willpower"].base
+    return 1.25 - 0.5 * (1 - normalized)
+end
+
+local function SpellSuccess(pid)
+    local mysticism = (tes3mp.GetSkillBase(pid, 14) + tes3mp.GetSkillModifier(pid, 14)) * 2
+    local willpower = tes3mp.GetAttributeBase(pid, 2) + tes3mp.GetAttributeModifier(pid, 2)
+    local luck = tes3mp.GetAttributeBase(pid, 7) + tes3mp.GetAttributeModifier(pid, 7)
 
     -- OpenMW spell chance formula, source: https://wiki.openmw.org/index.php?title=Research:Magic#Spell_Casting
 
-    local chance = (mysticism - MultipleMarkAndRecall.config.spellCost + 0.2 * willpower + 0.1 * luck) * (currentFatigue / maximumFatigue)
+    local chance = (mysticism - MultipleMarkAndRecall.config.spellCost + 0.2 * willpower + 0.1 * luck) * GetFatigueTerm(pid)
 
-    local succeed = math.random(1, 100) < chance
+    local succeed = math.random(0, 99) < chance
 
     DoProgressAndStats(pid, succeed)
 
