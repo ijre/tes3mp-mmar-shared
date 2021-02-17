@@ -8,7 +8,7 @@ MultipleMarkAndRecall.defaultConfig =
     minStaffRankMark = 1,
     minStaffRankMarkRm = 1,
     minStaffRankRecall = 0,
-    minStaffRankView = 0,
+    minStaffRankList = 0,
     msgMark = color.Green .. "The mark \"%s\" has been set by %s!" .. color.Default,
     msgMarkRm = color.Red .. "The mark \"%s\" has been deleted by %s!" .. color.Default,
     msgRecall = color.Green .. "Recalled to: \"%s\"!" .. color.Default,
@@ -73,8 +73,13 @@ local function SpellSuccess(pid)
     return succeed
 end
 
-local function HasPermission(pid, spell)
-    local rank = Players[pid].data.settings.staffRank
+local function HasPermission(pid, rankRequired)
+    if Players[pid].data.settings.staffRank < rankRequired then
+        ChatMsg(pid, color.Red .. "You don't have the proper staff rank to do this command!" .. color.Default)
+        return false
+    end
+
+    return true
 end
 
 local function DoRecall(pid, markName)
@@ -106,33 +111,19 @@ local function SetMark(pid, markName)
 end
 -- endregion
 
+MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
+    local cmdRank = 0
 
-MultipleMarkAndRecall.ListMarks = function(pid)
-    local marks = MultipleMarkAndRecall.marks
-
-    if tableHelper.isEmpty(marks) then
-        ChatMsg(pid, "There are no marks set.")
+    if cmd == "mark" then
+        cmdRank = MultipleMarkAndRecall.config.minStaffRankMark
     else
-        ChatMsg(pid, "Marks:")
-
-        for name, pos in pairs(marks) do
-            ChatMsg(pid, name .. " (" .. pos.cell .. ")")
-        end
+        cmdRank = MultipleMarkAndRecall.config.minStaffRankRecall
     end
 
-    ChatMsg(pid, "There are currently " .. tostring(tableHelper.getCount(MultipleMarkAndRecall.marks)) .. " marks.")
-end
+    if not HasPermission(pid, cmdRank) then
+        return
+    end
 
-MultipleMarkAndRecall.RmMark = function(pid, cmd)
-    local markName = tableHelper.concatenateFromIndex(cmd, 2)
-
-    MultipleMarkAndRecall.marks[markName] = nil
-    tableHelper.cleanNils(MultipleMarkAndRecall.marks)
-
-    ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMarkRm, markName, tes3mp.GetName(pid)), true)
-end
-
-MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
     local spell = cmd[1]
     local spellUpper = spell:gsub("^%l", string.upper)
 
@@ -141,9 +132,7 @@ MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
 
     local player = Players[pid]
 
-    if not HasPermission(pid, spell) then
-        ChatMsg(pid, color.Red .. "You don't have the proper permissions to do this command!" .. color.Default)
-    elseif not HasSpell(pid, spell) then
+    if not HasSpell(pid, spell) then
         ChatMsg(pid, color.Red .. "You do not have the " .. spellUpper .. " spell!" .. color.Default)
     elseif markName == "" then
         ChatMsg(pid, color.Red .. "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"" .. color.Default)
@@ -166,6 +155,39 @@ MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
     end
 
     DataManager.saveConfiguration(marksConfig, MultipleMarkAndRecall.marks)
+end
+
+MultipleMarkAndRecall.RmMark = function(pid, cmd)
+    if not HasPermission(pid, MultipleMarkAndRecall.config.minStaffRankMarkRm) then
+        return
+    end
+
+    local markName = tableHelper.concatenateFromIndex(cmd, 2)
+
+    MultipleMarkAndRecall.marks[markName] = nil
+    tableHelper.cleanNils(MultipleMarkAndRecall.marks)
+
+    ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMarkRm, markName, tes3mp.GetName(pid)), true)
+end
+
+MultipleMarkAndRecall.ListMarks = function(pid)
+    if not HasPermission(pid, MultipleMarkAndRecall.config.minStaffRankList) then
+        return
+    end
+
+    local marks = MultipleMarkAndRecall.marks
+
+    if tableHelper.isEmpty(marks) then
+        ChatMsg(pid, "There are no marks set.")
+    else
+        ChatMsg(pid, "Marks:")
+
+        for name, pos in pairs(marks) do
+            ChatMsg(pid, name .. " (" .. pos.cell .. ")")
+        end
+    end
+
+    ChatMsg(pid, "There are currently " .. tostring(tableHelper.getCount(MultipleMarkAndRecall.marks)) .. " marks.")
 end
 
 customCommandHooks.registerCommand("mark", MultipleMarkAndRecall.RunMarkOrRecall)
