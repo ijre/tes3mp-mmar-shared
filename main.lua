@@ -11,29 +11,35 @@ MultipleMarkAndRecall.defaultConfig =
   minStaffRankList = 0,
   spellCost = 18,
   skillProgressPoints = 2,
-  msgMark = color.Green .. "The mark \"%s\" has been set by %s!" .. color.Default,
-  msgMarkRm = color.Red .. "The mark \"%s\" has been deleted by %s!" .. color.Default,
-  msgRecall = color.Green .. "Recalled to: \"%s\"!" .. color.Default,
-  msgFailed = color.Red .. "%s failed; mark \"%s\" doesn't exist!" .. color.Default,
+  msgPrefixColour = color.Purple,
+  msgGeneralColour = color.RebeccaPurple,
+  msgSuccessColour = color.Green,
+  msgAlertColour = color.Red
 }
 
 MultipleMarkAndRecall.SortOrder =
 {
   "minStaffRankMark", "minStaffRankMarkRm", "minStaffRankRecall", "minStaffRankList",
   "spellCost", "skillProgressPoints",
-  "msgMark", "msgMarkRm", "msgRecall", "msgFailed"
+  "msgPrefixColour", "msgGeneralColour", "msgSuccessColour", "msgFailedColour"
 }
 
 MultipleMarkAndRecall.config = DataManager.loadConfiguration(scriptName, MultipleMarkAndRecall.defaultConfig, MultipleMarkAndRecall.SortOrder)
 
-MultipleMarkAndRecall.marks = {}
 MultipleMarkAndRecall.marks = DataManager.loadConfiguration(marksConfig, {})
+
+MultipleMarkAndRecall.ChatTypes =
+{
+  GENERAL = MultipleMarkAndRecall.config.msgGeneralColour,
+  SUCCESS = MultipleMarkAndRecall.config.msgSuccessColour,
+  ALERT   = MultipleMarkAndRecall.config.msgAlertColour,
+}
 
 math.randomseed(os.time())
 
 -- region Helpers
-local function ChatMsg(pid, msg, all)
-  tes3mp.SendMessage(pid, "[MMAR]: " .. msg .. "\n", all)
+local function ChatMsg(pid, message, chatType, all)
+  tes3mp.SendMessage(pid, string.format("%s[MMAR]: %s%s\n", MultipleMarkAndRecall.config.msgPrefixColour, chatType, message), all)
 end
 
 local function HasSpell(pid, spell)
@@ -67,7 +73,7 @@ local function SpellSuccess(pid, spellName)
 
   player:SaveStatsDynamic()
   if player.data.stats.magickaCurrent < MultipleMarkAndRecall.config.spellCost then
-    ChatMsg(pid, color.Red .. "You do not have enough magicka to cast " .. spellName .. "!" .. color.Default)
+    ChatMsg(pid, string.format("You do not have enough magicka to cast %s!", spellName), MultipleMarkAndRecall.ChatTypes.ALERT)
     return false
   end
 
@@ -85,7 +91,7 @@ local function SpellSuccess(pid, spellName)
   DoProgressAndStats(pid, succeed)
 
   if not succeed then
-    ChatMsg(pid, color.Red .. "Casting " .. spellName .. " has failed!" .. color.Default)
+    ChatMsg(pid, string.format("Failed to cast %s!", spellName), MultipleMarkAndRecall.ChatTypes.ALERT)
   end
 
   return succeed
@@ -93,7 +99,7 @@ end
 
 local function HasPermission(pid, rankRequired)
   if Players[pid].data.settings.staffRank < rankRequired then
-    ChatMsg(pid, color.Red .. "You don't have the proper staff rank to do this command!" .. color.Default)
+    ChatMsg(pid, "You don't have a high enough staff rank to do this command!", MultipleMarkAndRecall.ChatTypes.ALERT)
     return false
   end
 
@@ -137,7 +143,7 @@ local function DoRecall(pid, markName)
 
   Players[pid].data.customVariables.mmarBack = SwapPlayerLocDataWithTable(pid, mark)
 
-  ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgRecall, markName))
+  ChatMsg(pid, string.format("Recalled to: \"%s\"!", markName), MultipleMarkAndRecall.ChatTypes.SUCCESS)
 end
 
 local function SetMark(pid, markName)
@@ -151,7 +157,7 @@ local function SetMark(pid, markName)
     rotZ = tes3mp.GetRotZ(pid)
   }
 
-  ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMark, markName, tes3mp.GetName(pid)), true)
+  ChatMsg(pid, string.format("Mark \"%s\" has been set by %s!", markName, tes3mp.GetName(pid)), MultipleMarkAndRecall.ChatTypes.SUCCESS, true)
 end
 -- endregion
 
@@ -175,11 +181,11 @@ MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
   local mark = MultipleMarkAndRecall.marks[markName]
 
   if not HasSpell(pid, spell) then
-    ChatMsg(pid, color.Red .. "You do not have the " .. spellUpper .. " spell!" .. color.Default)
+    ChatMsg(pid, string.format("You do not have the %s spell!", spellUpper), MultipleMarkAndRecall.ChatTypes.ALERT)
   elseif markName == "" then
-    ChatMsg(pid, color.Red .. "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"" .. color.Default)
+    ChatMsg(pid, "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"", MultipleMarkAndRecall.ChatTypes.ALERT)
   elseif spell == "recall" and mark == nil then
-    ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgFailed, spellUpper, markName))
+    ChatMsg(pid, string.format("Recall failed; mark \"%s\" doesn't exist!", markName), MultipleMarkAndRecall.ChatTypes.ALERT)
   elseif SpellSuccess(pid, spellUpper) then
     if spell == "mark" then
       SetMark(pid, markName)
@@ -187,7 +193,7 @@ MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
       DoRecall(pid, markName)
     end
 
-    DataManager.saveConfiguration(marksConfig, MultipleMarkAndRecall.marks, MultipleMarkAndRecall.SortOrder)
+      DataManager.saveConfiguration(marksConfig, MultipleMarkAndRecall.marks, MultipleMarkAndRecall.SortOrder)
   end
 
 end
@@ -202,7 +208,7 @@ MultipleMarkAndRecall.RmMark = function(pid, cmd)
   MultipleMarkAndRecall.marks[markName] = nil
   tableHelper.cleanNils(MultipleMarkAndRecall.marks)
 
-  ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMarkRm, markName, tes3mp.GetName(pid)), true)
+  ChatMsg(pid, string.format("Mark \"%s\" has been deleted by %s!", markName, tes3mp.GetName(pid)), MultipleMarkAndRecall.ChatTypes.ALERT, true)
 end
 
 MultipleMarkAndRecall.ListMarks = function(pid)
@@ -213,16 +219,16 @@ MultipleMarkAndRecall.ListMarks = function(pid)
   local marks = MultipleMarkAndRecall.marks
 
   if tableHelper.isEmpty(marks) then
-    ChatMsg(pid, "There are no marks set.")
+    ChatMsg(pid, "There are no marks set.", MultipleMarkAndRecall.ChatTypes.GENERAL)
   else
-    ChatMsg(pid, "Marks:")
+    ChatMsg(pid, "Marks:", MultipleMarkAndRecall.ChatTypes.GENERAL)
 
     for name, pos in pairs(marks) do
-      ChatMsg(pid, string.format("%s (%s)", name, pos.cell))
+      ChatMsg(pid, string.format("%s %s(%s)", name, MultipleMarkAndRecall.ChatTypes.SUCCESS, pos.cell), MultipleMarkAndRecall.ChatTypes.GENERAL)
     end
   end
 
-  ChatMsg(pid, "There are currently " .. tostring(tableHelper.getCount(MultipleMarkAndRecall.marks)) .. " marks.")
+  ChatMsg(pid, string.format("There are currently %d marks.", tableHelper.getCount(MultipleMarkAndRecall.marks)), MultipleMarkAndRecall.ChatTypes.GENERAL)
 end
 
 MultipleMarkAndRecall.Back = function(pid)
@@ -235,12 +241,12 @@ MultipleMarkAndRecall.Back = function(pid)
   local loc = player.data.customVariables.mmarBack
 
   if loc == nil then
-    ChatMsg(pid, color.Red .. "Unable to find previous location in file!" .. color.Default)
+    ChatMsg(pid, "Unable to find previous location in file!", MultipleMarkAndRecall.ChatTypes.ALERT)
     return
   end
 
   if SpellSuccess(pid, "Recall") then
-    ChatMsg(pid, color.Green .. "Returned back to previous location!" .. color.Default)
+    ChatMsg(pid, "Returned back to previous location!", MultipleMarkAndRecall.ChatTypes.SUCCESS)
     player.data.customVariables.mmarBack = SwapPlayerLocDataWithTable(pid, loc)
   end
 end
