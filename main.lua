@@ -9,15 +9,22 @@ MultipleMarkAndRecall.defaultConfig =
     minStaffRankMarkRm = 1,
     minStaffRankRecall = 0,
     minStaffRankList = 0,
+    spellCost = 18,
+    skillProgressPoints = 2,
     msgMark = color.Green .. "The mark \"%s\" has been set by %s!" .. color.Default,
     msgMarkRm = color.Red .. "The mark \"%s\" has been deleted by %s!" .. color.Default,
     msgRecall = color.Green .. "Recalled to: \"%s\"!" .. color.Default,
     msgFailed = color.Red .. "%s failed; mark \"%s\" doesn't exist!" .. color.Default,
-    skillProgressPoints = 2,
-    spellCost = 18
 }
 
-MultipleMarkAndRecall.config = DataManager.loadConfiguration(scriptName, MultipleMarkAndRecall.defaultConfig)
+MultipleMarkAndRecall.SortOrder =
+{
+    "minStaffRankMark", "minStaffRankMarkRm", "minStaffRankRecall", "minStaffRankList",
+    "spellCost", "skillProgressPoints",
+    "msgMark", "msgMarkRm", "msgRecall", "msgFailed"
+}
+
+MultipleMarkAndRecall.config = DataManager.loadConfiguration(scriptName, MultipleMarkAndRecall.defaultConfig, MultipleMarkAndRecall.SortOrder)
 
 MultipleMarkAndRecall.marks = {}
 MultipleMarkAndRecall.marks = DataManager.loadConfiguration(marksConfig, {})
@@ -112,9 +119,10 @@ end
 -- endregion
 
 MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
-    local cmdRank = 0
+    local spell = cmd[1]
 
-    if cmd == "mark" then
+    local cmdRank = 0
+    if spell == "mark" then
         cmdRank = MultipleMarkAndRecall.config.minStaffRankMark
     else
         cmdRank = MultipleMarkAndRecall.config.minStaffRankRecall
@@ -124,7 +132,6 @@ MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
         return
     end
 
-    local spell = cmd[1]
     local spellUpper = spell:gsub("^%l", string.upper)
 
     local markName = tableHelper.concatenateFromIndex(cmd, 2)
@@ -154,7 +161,7 @@ MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
         end
     end
 
-    DataManager.saveConfiguration(marksConfig, MultipleMarkAndRecall.marks)
+    DataManager.saveConfiguration(marksConfig, MultipleMarkAndRecall.marks, MultipleMarkAndRecall.SortOrder)
 end
 
 MultipleMarkAndRecall.RmMark = function(pid, cmd)
