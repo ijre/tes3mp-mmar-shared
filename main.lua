@@ -62,20 +62,31 @@ local function GetFatigueTerm(pid)
     return 1.25 - 0.5 * (1 - normalized)
 end
 
-local function SpellSuccess(pid)
-    -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L59
-    -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L126
+local function SpellSuccess(pid, spellName)
+    local player = Players[pid]
+
+    player:SaveStatsDynamic()
+    if player.data.stats.magickaCurrent < MultipleMarkAndRecall.config.spellCost then
+        ChatMsg(pid, color.Red .. "You do not have enough magicka to cast " .. spellName .. "!" .. color.Default)
+        return false
+    end
 
     local mysticism = (tes3mp.GetSkillBase(pid, 14) + tes3mp.GetSkillModifier(pid, 14)) * 2
     local willpower = tes3mp.GetAttributeBase(pid, 2) + tes3mp.GetAttributeModifier(pid, 2)
     local luck = tes3mp.GetAttributeBase(pid, 7) + tes3mp.GetAttributeModifier(pid, 7)
 
     local chance = (mysticism - MultipleMarkAndRecall.config.spellCost + 0.2 * willpower + 0.1 * luck) * GetFatigueTerm(pid)
+    -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L59
+    -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L126
     -- Sadly unable to implement the Sound debuff for now, tes3mp doesn't seem to have any way of letting us see applied effects
 
     local succeed = math.random(0, 99) < chance
 
     DoProgressAndStats(pid, succeed)
+
+    if not succeed then
+        ChatMsg(pid, color.Red .. "Casting " .. spellName .. " has failed!" .. color.Default)
+    end
 
     return succeed
 end
@@ -89,18 +100,43 @@ local function HasPermission(pid, rankRequired)
     return true
 end
 
-local function DoRecall(pid, markName)
+local function SwapPlayerLocDataWithTable(pid, newLocData)
+    local oldLoc =
+    {
+        cell = tes3mp.GetCell(pid),
+        x = tes3mp.GetPosX(pid),
+        y = tes3mp.GetPosY(pid),
+        z = tes3mp.GetPosZ(pid),
+        rotX = tes3mp.GetRotX(pid),
+        rotZ = tes3mp.GetRotZ(pid)
+    }
+
     local player = Players[pid]
 
-    local mark = MultipleMarkAndRecall.marks[markName]
-
-    player.data.location.cell = mark.cell
-    player.data.location.posX = mark.x
-    player.data.location.posY = mark.y
-    player.data.location.posZ = mark.z
-    player.data.location.rotZ = mark.rot
+    player.data.location.cell = newLocData.cell
+    player.data.location.posX = newLocData.x
+    player.data.location.posY = newLocData.y
+    player.data.location.posZ = newLocData.z
+    player.data.location.rotX = newLocData.rotX
+    player.data.location.rotZ = newLocData.rotZ
 
     player:LoadCell()
+    return oldLoc
+end
+
+local function DoRecall(pid, markName)
+    local mark = MultipleMarkAndRecall.marks[markName]
+
+    if mark.rot ~= nil then
+        -- accounting for old marks without rotX
+        mark.rotZ = mark.rot
+        mark.rotX = 0.0
+        mark.rot = nil
+        tableHelper.cleanNils(mark)
+    end
+
+    Players[pid].data.customVariables.mmarBack = SwapPlayerLocDataWithTable(pid, mark)
+
     ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgRecall, markName))
 end
 
@@ -111,7 +147,8 @@ local function SetMark(pid, markName)
         x = tes3mp.GetPosX(pid),
         y = tes3mp.GetPosY(pid),
         z = tes3mp.GetPosZ(pid),
-        rot = tes3mp.GetRotZ(pid)
+        rotX = tes3mp.GetRotX(pid),
+        rotZ = tes3mp.GetRotZ(pid)
     }
 
     ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgMark, markName, tes3mp.GetName(pid)), true)
@@ -137,31 +174,22 @@ MultipleMarkAndRecall.RunMarkOrRecall = function(pid, cmd)
     local markName = tableHelper.concatenateFromIndex(cmd, 2)
     local mark = MultipleMarkAndRecall.marks[markName]
 
-    local player = Players[pid]
-
     if not HasSpell(pid, spell) then
         ChatMsg(pid, color.Red .. "You do not have the " .. spellUpper .. " spell!" .. color.Default)
     elseif markName == "" then
         ChatMsg(pid, color.Red .. "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"" .. color.Default)
     elseif spell == "recall" and mark == nil then
         ChatMsg(pid, string.format(MultipleMarkAndRecall.config.msgFailed, spellUpper, markName))
-    else
-        player:SaveStatsDynamic()
-
-        if player.data.stats.magickaCurrent < MultipleMarkAndRecall.config.spellCost then
-            ChatMsg(pid, color.Red .. "You do not have enough magicka to cast " .. spellUpper .. "!" .. color.Default)
-        elseif not SpellSuccess(pid) then
-            ChatMsg(pid, color.Red .. "Casting " .. spellUpper .. " has failed!" .. color.Default)
-        else
-            if spell == "mark" then
-                SetMark(pid, markName)
-            elseif spell == "recall" then
-                DoRecall(pid, markName)
-            end
+    elseif SpellSuccess(pid, spellUpper) then
+        if spell == "mark" then
+            SetMark(pid, markName)
+        elseif spell == "recall" then
+            DoRecall(pid, markName)
         end
+
+        DataManager.saveConfiguration(marksConfig, MultipleMarkAndRecall.marks, MultipleMarkAndRecall.SortOrder)
     end
 
-    DataManager.saveConfiguration(marksConfig, MultipleMarkAndRecall.marks, MultipleMarkAndRecall.SortOrder)
 end
 
 MultipleMarkAndRecall.RmMark = function(pid, cmd)
@@ -197,7 +225,28 @@ MultipleMarkAndRecall.ListMarks = function(pid)
     ChatMsg(pid, "There are currently " .. tostring(tableHelper.getCount(MultipleMarkAndRecall.marks)) .. " marks.")
 end
 
+MultipleMarkAndRecall.Back = function(pid)
+    if not HasPermission(pid, MultipleMarkAndRecall.config.minStaffRankRecall) then
+        return
+    end
+
+    local player = Players[pid]
+
+    local loc = player.data.customVariables.mmarBack
+
+    if loc == nil then
+        ChatMsg(pid, color.Red .. "Unable to find previous location in file!" .. color.Default)
+        return
+    end
+
+    if SpellSuccess(pid, "Recall") then
+        ChatMsg(pid, color.Green .. "Returned back to previous location!" .. color.Default)
+        player.data.customVariables.mmarBack = SwapPlayerLocDataWithTable(pid, loc)
+    end
+end
+
 customCommandHooks.registerCommand("mark", MultipleMarkAndRecall.RunMarkOrRecall)
 customCommandHooks.registerCommand("markrm", MultipleMarkAndRecall.RmMark)
 customCommandHooks.registerCommand("recall", MultipleMarkAndRecall.RunMarkOrRecall)
 customCommandHooks.registerCommand("ls", MultipleMarkAndRecall.ListMarks)
+customCommandHooks.registerCommand("back", MultipleMarkAndRecall.Back)
