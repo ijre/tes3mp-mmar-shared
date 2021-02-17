@@ -190,7 +190,7 @@ MultipleMarkAndRecall.ListMarks = function(pid)
         ChatMsg(pid, "Marks:")
 
         for name, pos in pairs(marks) do
-            ChatMsg(pid, name .. " (" .. pos.cell .. ")")
+            ChatMsg(pid, string.format("%s (%s)", name, pos.cell))
         end
     end
 
