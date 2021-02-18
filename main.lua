@@ -195,7 +195,6 @@ MMAR.RunMarkOrRecall = function(pid, cmd)
 
       DataManager.saveConfiguration(marksConfig, MMAR.marks, MMAR.SortOrder)
   end
-
 end
 
 MMAR.RmMark = function(pid, cmd)
