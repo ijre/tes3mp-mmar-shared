@@ -216,15 +216,22 @@ MMAR.ListMarks = function(pid)
     return
   end
 
-  local marks = MMAR.marks
-
-  if tableHelper.isEmpty(marks) then
+  if tableHelper.isEmpty(MMAR.marks) then
     ChatMsg(pid, "There are no marks set.", MMAR.ChatTypes.GENERAL)
   else
     ChatMsg(pid, "Marks:", MMAR.ChatTypes.GENERAL)
 
-    for name, pos in pairs(marks) do
-      ChatMsg(pid, string.format("%s %s(%s)", name, MMAR.ChatTypes.SUCCESS, pos.cell), MMAR.ChatTypes.GENERAL)
+    local sortedMarkNames = { }
+    local sortedMarkCells = { }
+    for markName, mark in pairs(MMAR.marks) do
+      table.insert(sortedMarkNames, markName)
+      sortedMarkCells[markName] = mark.cell
+    end
+    table.sort(sortedMarkNames)
+
+    for _, name in ipairs(sortedMarkNames) do
+      ChatMsg(pid, string.format("%s %s(%s)", name, MMAR.ChatTypes.SUCCESS, sortedMarkCells[name]), MMAR.ChatTypes.GENERAL)
+      -- todo: perhaps allow specifically this message to be customized?
     end
   end
 
