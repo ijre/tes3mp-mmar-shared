@@ -21,7 +21,7 @@ MMAR.SortOrder =
 {
   "minStaffRankMark", "minStaffRankMarkRm", "minStaffRankRecall", "minStaffRankList",
   "spellCost", "skillProgressPoints",
-  "msgPrefixColour", "msgGeneralColour", "msgSuccessColour", "msgFailedColour"
+  "msgPrefixColour", "msgGeneralColour", "msgSuccessColour", "msgAlertColour"
 }
 
 MMAR.config = DataManager.loadConfiguration(scriptName, MMAR.defaultConfig, MMAR.SortOrder)
