@@ -118,8 +118,8 @@ function Helpers:HasPermission(pid, rankRequired)
   return true
 end
 
-function Helpers:SwapPlayerLocDataWithTable(pid, newLocData)
-  local oldLoc =
+function Helpers:GetPlayerLocTable(pid)
+  return
   {
     cell = tes3mp.GetCell(pid),
     x    = tes3mp.GetPosX(pid),
@@ -128,6 +128,10 @@ function Helpers:SwapPlayerLocDataWithTable(pid, newLocData)
     rotX = tes3mp.GetRotX(pid),
     rotZ = tes3mp.GetRotZ(pid)
   }
+end
+
+function Helpers:SwapPlayerLocDataWithTable(pid, newLocData)
+  local oldLoc = self:GetPlayerLocTable(pid)
 
   local player = Players[pid]
 
