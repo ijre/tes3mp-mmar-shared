@@ -121,6 +121,30 @@ function MMAR.Back(pid)
   end
 end
 
+local coms =
+{
+  "teleport",
+  "tp",
+  "teleportto",
+  "tpto"
+}
+
+local origProcess = commandHandler.ProcessCommand
+function commandHandler.ProcessCommand(pid, cmd)
+  local index = tableHelper.getIndexByValue(coms, cmd[1])
+
+  if not index or cmd[2] == "all" or not logicHandler.CheckPlayerValidity(pid, cmd[2]) then
+    return origProcess(pid, cmd)
+  end
+
+  local target = index > 2 and pid or tonumber(cmd[2])
+  local targetP = Players[target]
+
+  targetP.data.customVariables.mmarBack = Helpers:GetPlayerLocTable(target)
+
+  return origProcess(pid, cmd)
+end
+
 customCommandHooks.registerCommand("mark", MMAR.RunMarkOrRecall)
 customCommandHooks.registerCommand("markrm", MMAR.RmMark)
 customCommandHooks.registerCommand("recall", MMAR.RunMarkOrRecall)
