@@ -120,7 +120,7 @@ function MMAR.Back(pid)
 
   local loc = player.data.customVariables.mmarBack
 
-  if loc then
+  if not loc then
     Helpers:ChatMsg(pid, "Unable to find previous location in file!", MMAR.ChatTypes.ALERT)
     return
   end
