@@ -1,45 +1,45 @@
-local scriptName = "MultipleMarkAndRecall"
-local marksConfig = "MultipleMarkAndRecall_marks"
+local ScriptName = "MultipleMarkAndRecall"
+local MarksConfig = "MultipleMarkAndRecall_marks"
 
 local MMAR = {}
 
-MMAR.defaultConfig =
+MMAR.DefaultConfig =
 {
-  minStaffRankMark = 1,
-  minStaffRankMarkRm = 1,
-  minStaffRankRecall = 0,
-  minStaffRankList = 0,
-  spellCost = 18,
-  skillProgressPoints = 2,
-  msgPrefixColour = color.Purple,
-  msgGeneralColour = color.RebeccaPurple,
-  msgSuccessColour = color.Green,
-  msgAlertColour = color.Red
+  MinStaffRankMark = 1,
+  MinStaffRankMarkRm = 1,
+  MinStaffRankRecall = 0,
+  MinStaffRankList = 0,
+  SpellCost = 18,
+  SkillProgressPoints = 2,
+  MsgPrefixColour = color.Purple,
+  MsgGeneralColour = color.RebeccaPurple,
+  MsgSuccessColour = color.Green,
+  MsgAlertColour = color.Red
 }
 
 MMAR.SortOrder =
 {
-  "minStaffRankMark", "minStaffRankMarkRm", "minStaffRankRecall", "minStaffRankList",
-  "spellCost", "skillProgressPoints",
-  "msgPrefixColour", "msgGeneralColour", "msgSuccessColour", "msgAlertColour"
+  "MinStaffRankMark", "MinStaffRankMarkRm", "MinStaffRankRecall", "MinStaffRankList",
+  "SpellCost", "SkillProgressPoints",
+  "MsgPrefixColour", "MsgGeneralColour", "MsgSuccessColour", "MsgAlertColour"
 }
 
-MMAR.config = DataManager.loadConfiguration(scriptName, MMAR.defaultConfig, MMAR.SortOrder)
+MMAR.Config = DataManager.loadConfiguration(ScriptName, MMAR.DefaultConfig, MMAR.SortOrder)
 
-MMAR.marks = DataManager.loadConfiguration(marksConfig, {})
+MMAR.Marks = DataManager.loadConfiguration(MarksConfig, {})
 
 MMAR.ChatTypes =
 {
-  GENERAL = MMAR.config.msgGeneralColour,
-  SUCCESS = MMAR.config.msgSuccessColour,
-  ALERT   = MMAR.config.msgAlertColour,
+  GENERAL = MMAR.Config.MsgGeneralColour,
+  SUCCESS = MMAR.Config.MsgSuccessColour,
+  ALERT   = MMAR.Config.MsgAlertColour,
 }
 
 math.randomseed(os.time())
 
 -- region Helpers
 local function ChatMsg(pid, message, chatType, all)
-  tes3mp.SendMessage(pid, string.format("%s[MMAR]: %s%s\n", MMAR.config.msgPrefixColour, chatType, message), all)
+  tes3mp.SendMessage(pid, string.format("%s[MMAR]: %s%s\n", MMAR.Config.MsgPrefixColour, chatType, message), all)
 end
 
 local function HasSpell(pid, spell)
@@ -50,11 +50,11 @@ local function DoProgressAndStats(pid, progress)
   local player = Players[pid]
 
   if progress then
-    player.data.skills.Mysticism.progress = player.data.skills.Mysticism.progress + MMAR.config.skillProgressPoints
+    player.data.skills.Mysticism.progress = player.data.skills.Mysticism.progress + MMAR.Config.SkillProgressPoints
     player:LoadSkills()
   end
 
-  player.data.stats.magickaCurrent = player.data.stats.magickaCurrent - MMAR.config.spellCost
+  player.data.stats.magickaCurrent = player.data.stats.magickaCurrent - MMAR.Config.SpellCost
   player:LoadStatsDynamic()
 end
 
@@ -62,8 +62,7 @@ local function GetFatigueTerm(pid)
   -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/creaturestats.cpp#L94
 
   local maximumFatigue = tes3mp.GetFatigueBase(pid)
-  local normalized = math.floor(maximumFatigue)
-  if normalized == 0 then normalized = 1 else normalized = math.max(0.0, tes3mp.GetFatigueCurrent(pid) / maximumFatigue) end
+  local normalized = math.floor(maximumFatigue) == 0 and 1 or math.max(0.0, tes3mp.GetFatigueCurrent(pid) / maximumFatigue)
 
   return 1.25 - 0.5 * (1 - normalized)
 end
@@ -72,7 +71,7 @@ local function SpellSuccess(pid, spellName)
   local player = Players[pid]
 
   player:SaveStatsDynamic()
-  if player.data.stats.magickaCurrent < MMAR.config.spellCost then
+  if player.data.stats.magickaCurrent < MMAR.Config.SpellCost then
     ChatMsg(pid, string.format("You do not have enough magicka to cast %s!", spellName), MMAR.ChatTypes.ALERT)
     return false
   end
@@ -81,7 +80,7 @@ local function SpellSuccess(pid, spellName)
   local willpower = tes3mp.GetAttributeBase(pid, 2) + tes3mp.GetAttributeModifier(pid, 2)
   local luck = tes3mp.GetAttributeBase(pid, 7) + tes3mp.GetAttributeModifier(pid, 7)
 
-  local chance = (mysticism - MMAR.config.spellCost + 0.2 * willpower + 0.1 * luck) * GetFatigueTerm(pid)
+  local chance = (mysticism - MMAR.Config.SpellCost + 0.2 * willpower + 0.1 * luck) * GetFatigueTerm(pid)
   -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L59
   -- https://github.com/TES3MP/openmw-tes3mp/blob/0.7.1/apps/openmw/mwmechanics/spellutil.cpp#L126
   -- Sadly unable to implement the Sound debuff for now, tes3mp doesn't seem to have any way of letting us see applied effects
@@ -131,9 +130,9 @@ local function SwapPlayerLocDataWithTable(pid, newLocData)
 end
 
 local function DoRecall(pid, markName)
-  local mark = MMAR.marks[markName]
+  local mark = MMAR.Marks[markName]
 
-  if mark.rot ~= nil then
+  if mark.rot then
     -- accounting for old marks without rotX
     mark.rotZ = mark.rot
     mark.rotX = 0.0
@@ -147,7 +146,7 @@ local function DoRecall(pid, markName)
 end
 
 local function SetMark(pid, markName)
-  MMAR.marks[markName] =
+  MMAR.Marks[markName] =
   {
     cell = tes3mp.GetCell(pid),
     x    = tes3mp.GetPosX(pid),
@@ -166,9 +165,9 @@ MMAR.RunMarkOrRecall = function(pid, cmd)
 
   local cmdRank = 0
   if spell == "mark" then
-    cmdRank = MMAR.config.minStaffRankMark
+    cmdRank = MMAR.Config.MinStaffRankMark
   else
-    cmdRank = MMAR.config.minStaffRankRecall
+    cmdRank = MMAR.Config.MinStaffRankRecall
   end
 
   if not HasPermission(pid, cmdRank) then
@@ -178,13 +177,13 @@ MMAR.RunMarkOrRecall = function(pid, cmd)
   local spellUpper = spell:gsub("^%l", string.upper)
 
   local markName = tableHelper.concatenateFromIndex(cmd, 2)
-  local mark = MMAR.marks[markName]
+  local mark = MMAR.Marks[markName]
 
   if not HasSpell(pid, spell) then
     ChatMsg(pid, string.format("You do not have the %s spell!", spellUpper), MMAR.ChatTypes.ALERT)
   elseif markName == "" then
     ChatMsg(pid, "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"", MMAR.ChatTypes.ALERT)
-  elseif spell == "recall" and mark == nil then
+  elseif spell == "recall" and not mark then
     ChatMsg(pid, string.format("Recall failed; mark \"%s\" doesn't exist!", markName), MMAR.ChatTypes.ALERT)
   elseif SpellSuccess(pid, spellUpper) then
     if spell == "mark" then
@@ -193,36 +192,36 @@ MMAR.RunMarkOrRecall = function(pid, cmd)
       DoRecall(pid, markName)
     end
 
-      DataManager.saveConfiguration(marksConfig, MMAR.marks, MMAR.SortOrder)
+      DataManager.saveConfiguration(MarksConfig, MMAR.Marks, MMAR.SortOrder)
   end
 end
 
 MMAR.RmMark = function(pid, cmd)
-  if not HasPermission(pid, MMAR.config.minStaffRankMarkRm) then
+  if not HasPermission(pid, MMAR.Config.MinStaffRankMarkRm) then
     return
   end
 
   local markName = tableHelper.concatenateFromIndex(cmd, 2)
 
-  MMAR.marks[markName] = nil
-  tableHelper.cleanNils(MMAR.marks)
+  MMAR.Marks[markName] = nil
+  tableHelper.cleanNils(MMAR.Marks)
 
   ChatMsg(pid, string.format("Mark \"%s\" has been deleted by %s!", markName, tes3mp.GetName(pid)), MMAR.ChatTypes.ALERT, true)
 end
 
 MMAR.ListMarks = function(pid)
-  if not HasPermission(pid, MMAR.config.minStaffRankList) then
+  if not HasPermission(pid, MMAR.Config.MinStaffRankList) then
     return
   end
 
-  if tableHelper.isEmpty(MMAR.marks) then
+  if tableHelper.isEmpty(MMAR.Marks) then
     ChatMsg(pid, "There are no marks set.", MMAR.ChatTypes.GENERAL)
   else
     ChatMsg(pid, "Marks:", MMAR.ChatTypes.GENERAL)
 
     local sortedMarkNames = { }
     local sortedMarkCells = { }
-    for markName, mark in pairs(MMAR.marks) do
+    for markName, mark in pairs(MMAR.Marks) do
       table.insert(sortedMarkNames, markName)
       sortedMarkCells[markName] = mark.cell
     end
@@ -234,11 +233,11 @@ MMAR.ListMarks = function(pid)
     end
   end
 
-  ChatMsg(pid, string.format("There are currently %d marks.", tableHelper.getCount(MMAR.marks)), MMAR.ChatTypes.GENERAL)
+  ChatMsg(pid, string.format("There are currently %d marks.", tableHelper.getCount(MMAR.Marks)), MMAR.ChatTypes.GENERAL)
 end
 
 MMAR.Back = function(pid)
-  if not HasPermission(pid, MMAR.config.minStaffRankRecall) then
+  if not HasPermission(pid, MMAR.Config.MinStaffRankRecall) then
     return
   end
 
@@ -246,7 +245,7 @@ MMAR.Back = function(pid)
 
   local loc = player.data.customVariables.mmarBack
 
-  if loc == nil then
+  if not loc then
     ChatMsg(pid, "Unable to find previous location in file!", MMAR.ChatTypes.ALERT)
     return
   end
