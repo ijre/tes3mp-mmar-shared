@@ -19,7 +19,8 @@ MMAR =
   Marks = { }
 }
 
-dofile("server/scripts/custom/tes3mp-mmar-shared/helpers.lua")
+require("custom/tes3mp-mmar-shared/helpers")
+-- require("custom/tes3mp-mmar-shared/src/helpers")
 local Helpers = MMAR.Helpers
 Helpers:Load()
 
