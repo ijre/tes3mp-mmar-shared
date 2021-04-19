@@ -1,4 +1,33 @@
-local Helpers = { }
+local Helpers =
+{
+  SortOrder =
+  {
+    "MinStaffRankMark", "MinStaffRankMarkRm", "MinStaffRankRecall", "MinStaffRankList",
+    "SpellCost", "SkillProgressPoints",
+    "MsgPrefixColour", "MsgGeneralColour", "MsgSuccessColour", "MsgAlertColour"
+  },
+  ConfigFile = "MultipleMarkAndRecall",
+  MarksFile = "MultipleMarkAndRecall_marks"
+}
+
+function Helpers:Load(check)
+  MMAR.Config = DataManager.loadConfiguration(self.ConfigFile, self.Defaults, self.SortOrder)
+  MMAR.Marks =  DataManager.loadConfiguration(self.MarksFile, { })
+
+  if check or check == nil then
+    self:CheckOlderVersion()
+  end
+end
+
+function Helpers:Save(configOnly, marksOnly)
+  if configOnly or not marksOnly then
+    DataManager.saveConfiguration(self.ConfigFile, MMAR.Config, self.SortOrder)
+  end
+
+  if marksOnly or not configOnly then
+    DataManager.saveConfiguration(self.MarksFile, MMAR.Marks)
+  end
+end
 
 function Helpers:ChatMsg(pid, message, chatType, all)
   tes3mp.SendMessage(pid, string.format("%s[MMAR]: %s%s\n", MMAR.Config.MsgPrefixColour, chatType, message), all)
@@ -75,6 +104,12 @@ function Helpers:SpellSuccess(pid, spellName)
 end
 
 function Helpers:HasPermission(pid, rankRequired)
+  if not rankRequired then
+    self:CheckOlderVersion()
+    self:ChatMsg(pid, "Command failed due to outdated config. Please try again.", MMAR.ChatTypes.ALERT)
+    return false
+  end
+
   if Players[pid].data.settings.staffRank < rankRequired then
     self:ChatMsg(pid, "You don't have a high enough staff rank to do this command!", MMAR.ChatTypes.ALERT)
     return false
@@ -110,11 +145,8 @@ end
 function Helpers:DoRecall(pid, markName)
   local mark = MMAR.Marks[markName]
 
-  if not mark.rot then
-    mark.rotZ = mark.rot
-    mark.rotX = 0.0
-    mark.rot = nil
-    tableHelper.cleanNils(mark)
+  if not mark.rotX or not mark.rotZ then
+    self:CheckOlderVersion(markName)
   end
 
   Players[pid].data.customVariables.mmarBack = self:SwapPlayerLocDataWithTable(pid, mark)
@@ -134,6 +166,47 @@ function Helpers:SetMark(pid, markName)
   }
 
   self:ChatMsg(pid, string.format("Mark \"%s\" has been set by %s!", markName, tes3mp.GetName(pid)), MMAR.ChatTypes.SUCCESS, true)
+  self:Save(_, true)
+end
+
+function Helpers:CheckOlderVersion(markName)
+  if not markName then
+    for name, v in pairs(MMAR.Config) do
+      local oldName = tostring(name)
+      local newName = string.gsub(oldName, "^%l", string.upper)
+
+      if not MMAR.Defaults[oldName] then
+        MMAR.Config[newName] = v
+        MMAR.Config[oldName] = nil
+      end
+    end
+    tableHelper.cleanNils(MMAR.Config)
+
+    if tableHelper.getCount(MMAR.Config) ~= tableHelper.getCount(MMAR.Defaults) then
+      for name, v in pairs(MMAR.Defaults) do
+        local nameStr = tostring(name)
+
+        if not MMAR.Config[nameStr] then
+          MMAR.Config[nameStr] = v
+        end
+      end
+    end
+
+    self:Save(true)
+  else
+    local mark = MMAR.Marks[markName]
+
+    mark.rotZ = mark.rot or mark.rotZ or 0.0
+    mark.rotX = mark.rotX or 0.0
+    mark.rot = nil
+    tableHelper.cleanNils(mark)
+
+    MMAR.Marks[markName] = mark
+
+    self:Save(_, true)
+  end
+
+  self:Load(false)
 end
 
 MMAR.Helpers = Helpers

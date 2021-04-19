@@ -1,34 +1,27 @@
 math.randomseed(os.time())
 
-local ScriptName = "MultipleMarkAndRecall"
-local MarksConfig = "MultipleMarkAndRecall_marks"
-
-local Defaults =
-{
-  MinStaffRankMark = 1,
-  MinStaffRankMarkRm = 1,
-  MinStaffRankRecall = 0,
-  MinStaffRankList = 0,
-  SpellCost = 18,
-  SkillProgressPoints = 2,
-  MsgPrefixColour = color.Purple,
-  MsgGeneralColour = color.RebeccaPurple,
-  MsgSuccessColour = color.Green,
-  MsgAlertColour = color.Red
-}
-
 MMAR =
 {
-  Config = Defaults,
-  SortOrder =
+  Defaults =
   {
-    "MinStaffRankMark", "MinStaffRankMarkRm", "MinStaffRankRecall", "MinStaffRankList",
-    "SpellCost", "SkillProgressPoints",
-    "MsgPrefixColour", "MsgGeneralColour", "MsgSuccessColour", "MsgAlertColour"
-  }
+    MinStaffRankMark = 1,
+    MinStaffRankMarkRm = 1,
+    MinStaffRankRecall = 0,
+    MinStaffRankList = 0,
+    SpellCost = 18,
+    SkillProgressPoints = 2,
+    MsgPrefixColour = color.Purple,
+    MsgGeneralColour = color.RebeccaPurple,
+    MsgSuccessColour = color.Green,
+    MsgAlertColour = color.Red
+  },
+  Config = { },
+  Marks = { }
 }
-MMAR.Config = DataManager.loadConfiguration(ScriptName, Defaults, MMAR.SortOrder)
-MMAR.Marks = DataManager.loadConfiguration(MarksConfig, { })
+
+dofile("server/scripts/custom/tes3mp-mmar-shared/helpers.lua")
+local Helpers = MMAR.Helpers
+Helpers:Load()
 
 MMAR.ChatTypes =
 {
@@ -36,9 +29,6 @@ MMAR.ChatTypes =
   SUCCESS = MMAR.Config.MsgSuccessColour,
   ALERT   = MMAR.Config.MsgAlertColour,
 }
-
-dofile("server/scripts/custom/tes3mp-mmar-shared/helpers.lua")
-local Helpers = MMAR.Helpers
 
 function MMAR.RunMarkOrRecall(pid, cmd)
   local spell = cmd[1]
@@ -62,7 +52,6 @@ function MMAR.RunMarkOrRecall(pid, cmd)
   elseif Helpers:CheckMarkExists(pid, spellUpper, markName) and Helpers:SpellSuccess(pid, spellUpper) then
     if spell == "mark" then
       Helpers:SetMark(pid, markName)
-      DataManager.saveConfiguration(MarksConfig, MMAR.Marks)
     elseif spell == "recall" then
       Helpers:DoRecall(pid, markName)
     end
@@ -70,17 +59,17 @@ function MMAR.RunMarkOrRecall(pid, cmd)
 end
 
 function MMAR.RmMark(pid, cmd)
+  local markName = tableHelper.concatenateFromIndex(cmd, 2)
+
   if not Helpers:HasPermission(pid, MMAR.Config.MinStaffRankMarkRm)
-    or not Helpers:CheckMarkExists(pid, "MarkRM") then
+    or not Helpers:CheckMarkExists(pid, "MarkRM", markName) then
     return
   end
-
-  local markName = tableHelper.concatenateFromIndex(cmd, 2)
 
   MMAR.Marks[markName] = nil
   tableHelper.cleanNils(MMAR.Marks)
 
-  DataManager.saveConfiguration(MarksConfig, MMAR.Marks)
+  Helpers:Save(_, true)
   Helpers:ChatMsg(pid, string.format("Mark \"%s\" has been deleted by %s!", markName, tes3mp.GetName(pid)), MMAR.ChatTypes.ALERT, true)
 end
 
