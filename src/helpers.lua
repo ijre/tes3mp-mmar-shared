@@ -29,6 +29,46 @@ function Helpers:Save(configOnly, marksOnly)
   end
 end
 
+function Helpers:CheckOlderVersion(markName)
+  if not markName then
+    for name, v in pairs(MMAR.Config) do
+      local oldName = tostring(name)
+      local newName = string.gsub(oldName, "^%l", string.upper)
+
+      if not MMAR.Defaults[oldName] then
+        MMAR.Config[oldName] = nil
+        MMAR.Config[newName] = v
+      end
+    end
+    tableHelper.cleanNils(MMAR.Config)
+
+    if tableHelper.getCount(MMAR.Config) ~= tableHelper.getCount(MMAR.Defaults) then
+      for name, v in pairs(MMAR.Defaults) do
+        local nameStr = tostring(name)
+
+        if not MMAR.Config[nameStr] then
+          MMAR.Config[nameStr] = v
+        end
+      end
+    end
+
+    self:Save(true)
+  else
+    local mark = MMAR.Marks[markName]
+
+    mark.rotZ = mark.rot or mark.rotZ or 0.0
+    mark.rotX = mark.rotX or 0.0
+    mark.rot = nil
+    tableHelper.cleanNils(mark)
+
+    MMAR.Marks[markName] = mark
+
+    self:Save(_, true)
+  end
+
+  self:Load(false)
+end
+
 function Helpers:ChatMsg(pid, message, chatType, all)
   tes3mp.SendMessage(pid, string.format("%s[MMAR]: %s%s\n", MMAR.Config.MsgPrefixColour, chatType, message), all)
 end
@@ -171,46 +211,6 @@ function Helpers:SetMark(pid, markName)
 
   self:ChatMsg(pid, string.format("Mark \"%s\" has been set by %s!", markName, tes3mp.GetName(pid)), MMAR.ChatTypes.SUCCESS, true)
   self:Save(_, true)
-end
-
-function Helpers:CheckOlderVersion(markName)
-  if not markName then
-    for name, v in pairs(MMAR.Config) do
-      local oldName = tostring(name)
-      local newName = string.gsub(oldName, "^%l", string.upper)
-
-      if not MMAR.Defaults[oldName] then
-        MMAR.Config[oldName] = nil
-        MMAR.Config[newName] = v
-      end
-    end
-    tableHelper.cleanNils(MMAR.Config)
-
-    if tableHelper.getCount(MMAR.Config) ~= tableHelper.getCount(MMAR.Defaults) then
-      for name, v in pairs(MMAR.Defaults) do
-        local nameStr = tostring(name)
-
-        if not MMAR.Config[nameStr] then
-          MMAR.Config[nameStr] = v
-        end
-      end
-    end
-
-    self:Save(true)
-  else
-    local mark = MMAR.Marks[markName]
-
-    mark.rotZ = mark.rot or mark.rotZ or 0.0
-    mark.rotX = mark.rotX or 0.0
-    mark.rot = nil
-    tableHelper.cleanNils(mark)
-
-    MMAR.Marks[markName] = mark
-
-    self:Save(_, true)
-  end
-
-  self:Load(false)
 end
 
 MMAR.Helpers = Helpers
