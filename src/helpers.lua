@@ -17,6 +17,13 @@ function Helpers:Load(check)
   if check or check == nil then
     self:CheckOlderVersion()
   end
+
+  MMAR.Msgs =
+  {
+    GENERAL = MMAR.Config.MsgGeneralColour,
+    SUCCESS = MMAR.Config.MsgSuccessColour,
+    ALERT   = MMAR.Config.MsgAlertColour
+  }
 end
 
 function Helpers:Save(configOnly, marksOnly)
@@ -83,9 +90,9 @@ function Helpers:CheckMarkExists(pid, spell, markName)
   end
 
   if markName == "" then
-    Helpers:ChatMsg(pid, "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"", MMAR.ChatTypes.ALERT)
+    Helpers:ChatMsg(pid, "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"", MMAR.Msgs.ALERT)
   elseif not MMAR.Marks[markName] then
-    Helpers:ChatMsg(pid, string.format("%s failed; mark \"%s\" doesn't exist!", spell, markName), MMAR.ChatTypes.ALERT)
+    Helpers:ChatMsg(pid, string.format("%s failed; mark \"%s\" doesn't exist!", spell, markName), MMAR.Msgs.ALERT)
   else
     return true
   end
@@ -119,7 +126,7 @@ function Helpers:SpellSuccess(pid, spellName)
 
   player:SaveStatsDynamic()
   if player.data.stats.magickaCurrent < MMAR.Config.SpellCost then
-    self:ChatMsg(pid, string.format("You do not have enough magicka to cast %s!", spellName), MMAR.ChatTypes.ALERT)
+    self:ChatMsg(pid, string.format("You do not have enough magicka to cast %s!", spellName), MMAR.Msgs.ALERT)
     return false
   end
 
@@ -137,7 +144,7 @@ function Helpers:SpellSuccess(pid, spellName)
   self:DoProgressAndStats(pid, succeed)
 
   if not succeed then
-    self:ChatMsg(pid, string.format("Failed to cast %s!", spellName), MMAR.ChatTypes.ALERT)
+    self:ChatMsg(pid, string.format("Failed to cast %s!", spellName), MMAR.Msgs.ALERT)
   end
 
   return succeed
@@ -146,12 +153,12 @@ end
 function Helpers:HasPermission(pid, rankRequired)
   if not rankRequired then
     self:CheckOlderVersion()
-    self:ChatMsg(pid, "Command failed due to outdated config. Please try again.", MMAR.ChatTypes.ALERT)
+    self:ChatMsg(pid, "Command failed due to outdated config. Please try again.", MMAR.Msgs.ALERT)
     return false
   end
 
   if Players[pid].data.settings.staffRank < rankRequired then
-    self:ChatMsg(pid, "You don't have a high enough staff rank to do this command!", MMAR.ChatTypes.ALERT)
+    self:ChatMsg(pid, "You don't have a high enough staff rank to do this command!", MMAR.Msgs.ALERT)
     return false
   end
 
@@ -195,7 +202,7 @@ function Helpers:DoRecall(pid, markName)
 
   Players[pid].data.customVariables.mmarBack = self:SwapPlayerLocDataWithTable(pid, mark)
 
-  self:ChatMsg(pid, string.format("Recalled to: \"%s\"!", markName), MMAR.ChatTypes.SUCCESS)
+  self:ChatMsg(pid, string.format("Recalled to: \"%s\"!", markName), MMAR.Msgs.SUCCESS)
 end
 
 function Helpers:SetMark(pid, markName)
@@ -209,7 +216,7 @@ function Helpers:SetMark(pid, markName)
     rotZ = tes3mp.GetRotZ(pid)
   }
 
-  self:ChatMsg(pid, string.format("Mark \"%s\" has been set by %s!", markName, tes3mp.GetName(pid)), MMAR.ChatTypes.SUCCESS, true)
+  self:ChatMsg(pid, string.format("Mark \"%s\" has been set by %s!", markName, tes3mp.GetName(pid)), MMAR.Msgs.SUCCESS, true)
   self:Save(_, true)
 end
 
