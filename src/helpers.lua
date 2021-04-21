@@ -11,7 +11,7 @@ local Helpers =
 }
 
 function Helpers:Load(check)
-  MMAR.Config = DataManager.loadConfiguration(self.ConfigFile, self.Defaults, self.SortOrder)
+  MMAR.Config = DataManager.loadConfiguration(self.ConfigFile, MMAR.Defaults, self.SortOrder)
   MMAR.Marks =  DataManager.loadConfiguration(self.MarksFile, { })
 
   if check or check == nil then
@@ -180,8 +180,8 @@ function Helpers:CheckOlderVersion(markName)
       local newName = string.gsub(oldName, "^%l", string.upper)
 
       if not MMAR.Defaults[oldName] then
-        MMAR.Config[newName] = v
         MMAR.Config[oldName] = nil
+        MMAR.Config[newName] = v
       end
     end
     tableHelper.cleanNils(MMAR.Config)
