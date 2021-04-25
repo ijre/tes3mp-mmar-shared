@@ -1,4 +1,4 @@
-local Helpers =
+local Helpers = MMAR.Helpers or
 {
   SortOrder =
   {
@@ -220,4 +220,4 @@ function Helpers:SetMark(pid, markName)
   self:Save(_, true)
 end
 
-MMAR.Helpers = Helpers
+return Helpers

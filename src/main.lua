@@ -21,9 +21,8 @@ MMAR =
   Msgs = { }
 }
 
-require("custom/tes3mp-mmar-shared/helpers")
--- require("custom/tes3mp-mmar-shared/src/helpers")
-local Helpers = MMAR.Helpers
+local Helpers = require("custom/tes3mp-mmar-shared/helpers")
+-- local Helpers = require("custom/tes3mp-mmar-shared/src/helpers")
 Helpers:Load()
 
 function MMAR.RunMarkOrRecall(pid, cmd)
