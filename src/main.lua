@@ -10,6 +10,7 @@ MMAR =
     MinStaffRankList = 0,
     SpellCost = 18,
     SkillProgressPoints = 2,
+    BackCMDsRequireRecall = true,
     MsgPrefixColour = color.Purple,
     MsgGeneralColour = color.RebeccaPurple,
     MsgSuccessColour = color.Green,
@@ -97,6 +98,11 @@ end
 
 function MMAR.Back(pid)
   if not Helpers:HasPermission(pid, MMAR.Config.MinStaffRankRecall) then
+    return
+  end
+
+  if MMAR.Config.BackCMDsRequireRecall and not Helpers:HasSpell(pid, "recall") then
+    Helpers:ChatMsg(pid, "You do not have the Recall spell!", MMAR.Msgs.ALERT)
     return
   end
 

@@ -3,7 +3,7 @@ local Helpers =
   SortOrder =
   {
     "MinStaffRankMark", "MinStaffRankMarkRm", "MinStaffRankRecall", "MinStaffRankList",
-    "SpellCost", "SkillProgressPoints",
+    "SpellCost", "SkillProgressPoints", "BackCMDsRequireRecall",
     "MsgPrefixColour", "MsgGeneralColour", "MsgSuccessColour", "MsgAlertColour"
   },
   ConfigFile = "MultipleMarkAndRecall",
