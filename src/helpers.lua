@@ -101,15 +101,17 @@ function Helpers:CheckMarkExists(pid, spell, markName)
 end
 
 function Helpers:DoProgressAndStats(pid, progress)
-  local player = Players[pid]
+  local plr = Players[pid]
 
   if progress then
-    player.data.skills.Mysticism.progress = player.data.skills.Mysticism.progress + MMAR.Config.SkillProgressPoints
-    player:LoadSkills()
+    LevelingFramework.progressSkill(pid, "Mysticism", 1, MMAR.Config.SkillProgressPoints)
+    plr:LoadSkills()
+    plr:LoadLevel()
   end
 
-  player.data.stats.magickaCurrent = player.data.stats.magickaCurrent - MMAR.Config.SpellCost
-  player:LoadStatsDynamic()
+  local currMagicka = tes3mp.GetMagickaCurrent(pid)
+  tes3mp.SetMagickaCurrent(pid, currMagicka - MMAR.Config.SpellCost)
+  tes3mp.SendStatsDynamic(pid)
 end
 
 function Helpers:GetFatigueTerm(pid)
@@ -122,10 +124,7 @@ function Helpers:GetFatigueTerm(pid)
 end
 
 function Helpers:SpellSuccess(pid, spellName)
-  local player = Players[pid]
-
-  player:SaveStatsDynamic()
-  if player.data.stats.magickaCurrent < MMAR.Config.SpellCost then
+  if math.floor(tes3mp.GetMagickaCurrent(pid)) < MMAR.Config.SpellCost then
     self:ChatMsg(pid, string.format("You do not have enough magicka to cast %s!", spellName), MMAR.Msgs.ALERT)
     return false
   end
