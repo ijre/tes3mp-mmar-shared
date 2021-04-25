@@ -133,7 +133,7 @@ local origProcess = commandHandler.ProcessCommand
 function commandHandler.ProcessCommand(pid, cmd)
   local index = tableHelper.getIndexByValue(coms, cmd[1])
 
-  if not index or cmd[2] == "all" or not logicHandler.CheckPlayerValidity(pid, cmd[2]) then
+  if not index or cmd[2] == "all" or not logicHandler.CheckPlayerValidity(pid, cmd[2]) or tonumber(cmd[2]) == pid then
     return origProcess(pid, cmd)
   end
 
