@@ -124,7 +124,7 @@ function Helpers:GetFatigueTerm(pid)
 end
 
 function Helpers:SpellSuccess(pid, spellName)
-  if math.floor(tes3mp.GetMagickaCurrent(pid)) < MMAR.Config.SpellCost then
+  if math.ceil(tes3mp.GetMagickaCurrent(pid)) < MMAR.Config.SpellCost then
     self:ChatMsg(pid, string.format("You do not have enough magicka to cast %s!", spellName), MMAR.Msgs.ALERT)
     return false
   end
