@@ -120,6 +120,31 @@ function MMAR.Back(pid)
   end
 end
 
+function MMAR.BackGrave(pid)
+  if not Helpers:HasPermission(pid, MMAR.Config.MinStaffRankRecall) then
+    return
+  end
+
+  if MMAR.Config.BackCMDsRequireRecall and not Helpers:HasSpell(pid, "recall") then
+    Helpers:ChatMsg(pid, "You do not have the Recall spell!", MMAR.Msgs.ALERT)
+    return
+  end
+
+  local player = Players[pid]
+
+  local loc = player.data.customVariables.mmarBackGrave
+
+  if not loc then
+    Helpers:ChatMsg(pid, "Unable to find previous location in file!", MMAR.Msgs.ALERT)
+    return
+  end
+
+  if Helpers:SpellSuccess(pid, "Recall") then
+    Helpers:ChatMsg(pid, "Returned back to previous location!", MMAR.Msgs.SUCCESS)
+    Helpers:SwapPlayerLocDataWithTable(pid, loc)
+  end
+end
+
 local coms =
 {
   "teleport",
@@ -149,7 +174,13 @@ customCommandHooks.registerCommand("markrm", MMAR.RmMark)
 customCommandHooks.registerCommand("recall", MMAR.RunMarkOrRecall)
 customCommandHooks.registerCommand("ls", MMAR.ListMarks)
 customCommandHooks.registerCommand("back", MMAR.Back)
+customCommandHooks.registerCommand("backGrave", MMAR.BackGrave)
 customCommandHooks.registerCommand("refresh",
   function()
     Helpers:Load()
+  end)
+
+customEventHooks.registerHandler("OnPlayerDeath",
+  function(_, pid)
+    Players[pid].data.customVariables.mmarBackGrave = Helpers:GetPlayerLocTable(pid)
   end)
