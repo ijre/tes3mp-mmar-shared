@@ -1,6 +1,11 @@
 # Shared Multiple Mark And Recall for TES3MP
 
-This is a simple fork of the original repo, thus the installation and dependencies are the same. The important changes are as follows:
+This is a simple fork of the original repo, thus the installation and dependencies are mostly the same.
+
+- New **optional** dependency of LevelingFramework; having it installed allows the script to automatically add level progress for Mysticism + main level when/if applicable
+- - Highly recommended to install
+
+### The other important changes are as follows:
 
 - Marks are now shared between all players.
 
