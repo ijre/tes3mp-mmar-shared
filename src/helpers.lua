@@ -104,7 +104,12 @@ function Helpers:DoProgressAndStats(pid, progress)
   local plr = Players[pid]
 
   if progress then
-    LevelingFramework.progressSkill(pid, "Mysticism", 1, MMAR.Config.SkillProgressPoints)
+    if LevelingFramework then
+      LevelingFramework.progressSkill(pid, "Mysticism", MMAR.Config.SkillProgressPoints)
+    else
+      plr.data.skills.Mysticism.progress = plr.data.skills.Mysticism.progress + MMAR.Config.SkillProgressPoints
+    end
+
     plr:LoadSkills()
     plr:LoadLevel()
   end
