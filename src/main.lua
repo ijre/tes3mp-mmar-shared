@@ -120,7 +120,7 @@ function MMAR.Back(pid)
   end
 end
 
-function MMAR.BackGrave(pid)
+function MMAR.Grave(pid)
   if not Helpers:HasPermission(pid, MMAR.Config.MinStaffRankRecall) then
     return
   end
@@ -174,7 +174,7 @@ customCommandHooks.registerCommand("markrm", MMAR.RmMark)
 customCommandHooks.registerCommand("recall", MMAR.RunMarkOrRecall)
 customCommandHooks.registerCommand("ls", MMAR.ListMarks)
 customCommandHooks.registerCommand("back", MMAR.Back)
-customCommandHooks.registerCommand("backGrave", MMAR.BackGrave)
+customCommandHooks.registerCommand("grave", MMAR.Grave)
 customCommandHooks.registerCommand("refresh",
   function()
     Helpers:Load()
