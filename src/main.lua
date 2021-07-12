@@ -16,10 +16,10 @@ MMAR =
     MsgSuccessColour = color.Green,
     MsgAlertColour = color.Red
   },
-  Config = { },
   Marks = { },
   Msgs = { }
 }
+MMAR.Config = MMAR.Defaults
 
 local Helpers = require("custom/tes3mp-mmar-shared/helpers")
 -- local Helpers = require("custom/tes3mp-mmar-shared/src/helpers")
