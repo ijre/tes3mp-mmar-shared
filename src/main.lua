@@ -145,6 +145,18 @@ function MMAR.Grave(pid)
   end
 end
 
+local mmarCmds =
+{
+  "mark",
+  "markrm",
+  "recall",
+  "ls",
+  "back",
+  "grave",
+  "backgrave",
+  "refresh"
+}
+
 local coms =
 {
   "teleport",
@@ -158,6 +170,18 @@ function commandHandler.ProcessCommand(pid, cmd)
   local index = tableHelper.getIndexByValue(coms, cmd[1])
 
   if not index or cmd[2] == "all" or not logicHandler.CheckPlayerValidity(pid, cmd[2]) or tonumber(cmd[2]) == pid then
+    if tableHelper.containsCaseInsensitiveString(mmarCmds, cmd[1])
+      and
+      not mmarCmds[cmd[1]] then
+
+      local newCmd = cmd
+      newCmd[1] = newCmd[1]:lower()
+
+      customCommandHooks.getCallback(newCmd[1]:lower())(pid, newCmd)
+
+      return
+    end
+
     return origProcess(pid, cmd)
   end
 
