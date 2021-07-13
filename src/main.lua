@@ -152,15 +152,71 @@ function MMAR.Grave(pid)
   end
 end
 
+function MMAR.ListCommands(pid)
+  local function GetMinRankStrForCmd(num)
+    local rStr = ""
+
+    if num == 0 then
+      rStr = "Players"
+    elseif num == 1 then
+      rStr = "Moderators"
+    elseif num == 2 then
+      rStr = "Administrators"
+    elseif num >= 3 then
+      return "Owners"
+    else
+      return "HILARIOUS gamer moment when you make someone's rank " .. num
+    end
+
+    return rStr .. " and above"
+  end
+
+  local function GetRestrictedCommandSTR(rank)
+    return string.format("\nCommand is currently restricted to %s only by the server.", GetMinRankStrForCmd(rank))
+  end
+
+  local commandsStr =
+  {
+    mark = "/mark <markName> - Casts Mark at your current location, for you or others to use for Recalling to later."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankMark),
+
+    markrm = "/markrm <markName> - Removes a pre-existing mark from the list."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankMarkRm),
+
+    recall = "/recall <markName> - Provided you entered a valid mark name, this will cast Recall, teleporting you to the mark of your selection."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankRecall),
+
+    back = "/back - Casts Recall to the last place you had teleported from. This also works with /tpto and /tp, allowing you quick travel back and forth."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankRecall),
+
+    grave = "/grave - Like /back, but instead it's a back and forth between where you last died, and from where you last teleported to your gravesite at."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankRecall),
+
+    ls = "/ls - Tells you every mark currently saved, including the cell they reside within."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankList),
+
+    lscmds = "/lscmds OR /lscommands - Posts this wall of text, which tells you every command available for this here plugin."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankList),
+
+    refresh = "/refresh - Manually refreshes the list of marks; effectively necessary when attempting to manually edit a mark, as you otherwise have to restart the server."
+    .. GetRestrictedCommandSTR(MMAR.Config.MinStaffRankList)
+  }
+
+  for _, command in pairs(commandsStr) do
+    Helpers:ChatMsg(pid, command, MMAR.Msgs.GENERAL)
+  end
+end
+
 local mmarCmds =
 {
   "mark",
   "markrm",
   "recall",
-  "ls",
   "back",
   "grave",
-  "backgrave",
+  "ls",
+  "lscmds",
+  "lscommands",
   "refresh"
 }
 
@@ -186,7 +242,7 @@ function commandHandler.ProcessCommand(pid, cmd)
 
       customCommandHooks.getCallback(newCmd[1]:lower())(pid, newCmd)
 
-      return
+      return customEventHooks.makeEventStatus(false, nil)
     end
 
     return origProcess(pid, cmd)
@@ -203,9 +259,11 @@ end
 customCommandHooks.registerCommand("mark", MMAR.RunMarkOrRecall)
 customCommandHooks.registerCommand("markrm", MMAR.RmMark)
 customCommandHooks.registerCommand("recall", MMAR.RunMarkOrRecall)
-customCommandHooks.registerCommand("ls", MMAR.ListMarks)
 customCommandHooks.registerCommand("back", MMAR.Back)
 customCommandHooks.registerCommand("grave", MMAR.Grave)
+customCommandHooks.registerCommand("ls", MMAR.ListMarks)
+customCommandHooks.registerCommand("lscmds", MMAR.ListCommands)
+customCommandHooks.registerCommand("lscommands", MMAR.ListCommands)
 customCommandHooks.registerCommand("refresh",
   function()
     Helpers:Load()

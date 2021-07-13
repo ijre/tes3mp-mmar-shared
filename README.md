@@ -19,15 +19,18 @@ This is a simple fork of the original repo, thus the installation and dependenci
 - >`/mark`, `/markrm`, and `/recall`
 - - All work as expected, with the same usage as before.
 
-- >`/ls`
-- - Prints all marks into chat in alphabetical order.
-
 - >`/back`
 - - Teleports you back to your last position before using `/recall/`.
 - - Also has support for `/tp` and `/tpto`, the former setting the `/back` location for the player who was teleported.
 
 - >`/grave`
 - - Teleports you back to where you last died, also functions like `/back` in that typing it in twice will put you back where you started.
+
+- >`/ls`
+- - Prints all marks into chat in alphabetical order.
+
+- >`/lscmds` | `/lscommands`
+- - Prints all chat commands and their descriptions into chat.
 
 - >`/refresh`
 - - Reloads your config. Useful for testing different colours.
