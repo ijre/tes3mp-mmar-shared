@@ -220,7 +220,7 @@ function Helpers:SetMark(pid, markName)
     rotZ = tes3mp.GetRotZ(pid)
   }
 
-  self:ChatMsg(pid, string.format("Mark \"%s\" has been set by %s!", markName, tes3mp.GetName(pid)), MMAR.Msgs.SUCCESS, true)
+  self:ChatMsg(pid, string.format("Mark \"%s\" has been set by %s at %s!", markName, tes3mp.GetName(pid), MMAR.Marks[markName].cell), MMAR.Msgs.SUCCESS, true)
   self:Save(_, true)
 end
 
