@@ -84,20 +84,63 @@ function Helpers:HasSpell(pid, spell)
   return tableHelper.containsValue(Players[pid].data.spellbook, spell)
 end
 
-function Helpers:CheckMarkExists(pid, spell, markName)
-  if spell == "Mark" then
-    return true
+function Helpers:LocateMark(markName)
+  for key, _ in pairs(MMAR.Marks) do
+    local keyStr = tostring(key)
+
+    if keyStr:lower() == markName:lower() then
+      return keyStr
+    end
   end
+
+  return nil
+end
+
+function Helpers:VerifyMarkIsAvailable(pid, spell, markName)
+  local isMark = spell == "Mark"
 
   if markName == "" then
-    Helpers:ChatMsg(pid, "Please supply a mark name!\nIf you do not know any marks, do \"/ls\"", MMAR.Msgs.ALERT)
-  elseif not MMAR.Marks[markName] then
-    Helpers:ChatMsg(pid, string.format("%s failed; mark \"%s\" doesn't exist!", spell, markName), MMAR.Msgs.ALERT)
-  else
-    return true
+    local failStr = "Please supply a mark name!"
+
+    if not isMark then
+      failStr = failStr .. "\nIf you do not know any marks, do \"/ls\""
+    end
+
+    Helpers:ChatMsg(pid, failStr, MMAR.Msgs.ALERT)
+    return nil
   end
 
-  return false
+  local isOverride = string.find(markName, " -y", -3, true)
+  local markExists = self:LocateMark(markName)
+
+  if isMark and not markExists then
+    if isOverride then
+      -- if we can't find ourselves but we're overwriting, try and find the original to overwrite
+
+      local origMark = markName:sub(1, markName:len() - 3)
+
+      if self:LocateMark(origMark) then
+        markName = origMark
+      end
+      -- note: if they're attempting to use the overwrite flag when there isn't a mark to overwrite
+        -- just let em
+    end
+
+    return markName
+  elseif isMark and markExists and not isOverride then
+    local failStr =
+    string.format(
+      "The mark you have attempted to enter: \"%s\", already exists."
+      .."\nRepeat your command but with \'-y\' appended at the end, after the desired name to overwrite the previous mark.", markExists
+    )
+
+    self:ChatMsg(pid, failStr, MMAR.Msgs.ALERT)
+    return nil
+  elseif not isMark and not markExists then
+    Helpers:ChatMsg(pid, string.format("%s failed; mark \"%s\" doesn't exist!", spell, markName), MMAR.Msgs.ALERT)
+  end
+
+  return markExists
 end
 
 function Helpers:DoProgressAndStats(pid, progress)
@@ -210,6 +253,8 @@ function Helpers:DoRecall(pid, markName)
 end
 
 function Helpers:SetMark(pid, markName)
+  markName = markName:gsub("^%s*(.-)%s*$", "%1")
+
   MMAR.Marks[markName] =
   {
     cell = tes3mp.GetCell(pid),

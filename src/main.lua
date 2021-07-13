@@ -40,24 +40,31 @@ function MMAR.RunMarkOrRecall(pid, cmd)
   end
 
   local spellUpper = spell:gsub("^%l", string.upper)
-  local markName = tableHelper.concatenateFromIndex(cmd, 2)
+  local cmdName = tableHelper.concatenateFromIndex(cmd, 2)
 
   if not Helpers:HasSpell(pid, spell) then
     Helpers:ChatMsg(pid, string.format("You do not have the %s spell!", spellUpper), MMAR.Msgs.ALERT)
-  elseif Helpers:CheckMarkExists(pid, spellUpper, markName) and Helpers:SpellSuccess(pid, spellUpper) then
-    if spell == "mark" then
-      Helpers:SetMark(pid, markName)
-    elseif spell == "recall" then
-      Helpers:DoRecall(pid, markName)
+  else
+    local markName = Helpers:VerifyMarkIsAvailable(pid, spellUpper, cmdName)
+
+    if markName and Helpers:SpellSuccess(pid, spellUpper) then
+      if spell == "mark" then
+        Helpers:SetMark(pid, markName)
+      elseif spell == "recall" then
+        Helpers:DoRecall(pid, markName)
+      end
     end
   end
 end
 
 function MMAR.RmMark(pid, cmd)
-  local markName = tableHelper.concatenateFromIndex(cmd, 2)
+  if not Helpers:HasPermission(pid, MMAR.Config.MinStaffRankMarkRm) then
+    return
+  end
 
-  if not Helpers:HasPermission(pid, MMAR.Config.MinStaffRankMarkRm)
-    or not Helpers:CheckMarkExists(pid, "MarkRM", markName) then
+  local markName = Helpers:VerifyMarkIsAvailable(pid, "MarkRM", tableHelper.concatenateFromIndex(cmd, 2))
+
+  if not markName then
     return
   end
 
