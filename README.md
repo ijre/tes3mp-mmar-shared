@@ -9,7 +9,7 @@ This is a simple fork of the original repo, thus the installation and dependenci
 
 - Marks are now shared between all players.
 
-- Creating or deleting a mark will now tell everyone on the server who performed the action, alongside the name of the mark.
+- Creating or deleting a mark will now tell everyone on the server who performed the action, alongside the name of the mark and in what cell.
 
 - The config options have been fully redone and changed, now allowing for different colours for chat output, or for staff rank support
 
@@ -25,6 +25,9 @@ This is a simple fork of the original repo, thus the installation and dependenci
 - >`/back`
 - - Teleports you back to your last position before using `/recall/`.
 - - Also has support for `/tp` and `/tpto`, the former setting the `/back` location for the player who was teleported.
+
+- >`/grave`
+- - Teleports you back to where you last died, also functions like `/back` in that typing it in twice will put you back where you started.
 
 - >`/refresh`
 - - Reloads your config. Useful for testing different colours.
