@@ -21,8 +21,8 @@ MMAR =
 }
 MMAR.Config = MMAR.Defaults
 
-local Helpers = require("custom/tes3mp-mmar-shared/helpers")
--- local Helpers = require("custom/tes3mp-mmar-shared/src/helpers")
+local Helpers = require("custom/MMAR/helpers")
+-- local Helpers = require("custom/MMAR/MMAR/helpers")
 Helpers:Load()
 
 function MMAR.RunMarkOrRecall(pid, cmd)
